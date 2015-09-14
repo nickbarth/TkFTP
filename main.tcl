@@ -27,7 +27,7 @@ proc AddUserWindow { } {
 
   # UI
   frame .addWin.frame -padx 2 -pady 2
-  label .addWin.account_label -text "$ftp_env Alpha ID:"
+  label .addWin.account_label -text "$ftp_env Username:"
   entry .addWin.account_text -text "" -textvariable account
   label .addWin.password_label -text "Password:"
   entry .addWin.password_text -text "" -textvariable password
