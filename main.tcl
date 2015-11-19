@@ -21,8 +21,8 @@ proc add_user_modal { } {
   focus $w.account_text
 
   label $w.directory_label -text "Directory:"
-  entry $w.directory_text -text "" -textvariable _directory
   pack $w.directory_label -in $w.frame -side top -anchor nw
+  ttk::combobox $w.directory_text -state readonly -values {"/home/uploads/" "/home/production/"} -textvariable _directory
   pack $w.directory_text -in $w.frame -side top
   set ::_directory "/home/uploads/"
 
@@ -39,7 +39,7 @@ proc add_user_modal { } {
   vwait _complete
 
   if { $::_complete } {
-    exec adduser --system --ingroup wildtv --home $::_directory $::_username
+    exec adduser --system --ingroup wildtv --home $::_directory$::_username $::_username
     exec echo "$::_username:$::_password" | chpasswd
     refresh_user_table
   }
