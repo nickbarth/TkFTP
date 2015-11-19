@@ -15,8 +15,8 @@ proc add_user_modal { } {
   pack $w.frame -fill x -expand yes
 
   label $w.account_label -text "Username:"
-  entry $w.account_text -text "" -textvariable _username
   pack $w.account_label -in $w.frame -side top -anchor nw
+  entry $w.account_text -text "" -textvariable _username
   pack $w.account_text -in $w.frame -side top
   focus $w.account_text
 
@@ -27,8 +27,8 @@ proc add_user_modal { } {
   set ::_directory "/home/uploads/"
 
   label $w.password_label -text "Password:"
-  entry $w.password_text -text "" -textvariable _password
   pack $w.password_label -in $w.frame -side top -anchor nw
+  entry $w.password_text -text "" -textvariable _password
   pack $w.password_text -in $w.frame -side top
 
   button $w.ok -text Create -command {set _complete true}
@@ -77,8 +77,8 @@ proc update_user_modal { } {
   pack $w.account_label -in $w.frame -side top -anchor nw
   
   label $w.password_label -text "Password:"
-  entry $w.password_text -text "" -textvariable _password
   pack $w.password_label -in $w.frame -side top -anchor nw
+  entry $w.password_text -text "" -textvariable _password
   pack $w.password_text -in $w.frame -side top
   focus $w.password_text
 
