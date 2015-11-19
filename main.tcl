@@ -39,8 +39,9 @@ proc add_user_modal { } {
   vwait _complete
 
   if { $::_complete } {
-    exec adduser --system --ingroup wildtv --home $::_directory$::_username $::_username
+    exec adduser --system --ingroup wildtv --home $::_directory$::_username $::_username 2> /dev/null
     exec echo "$::_username:$::_password" | chpasswd
+    tk_messageBox -message "The user `$::_username` was added successfully." -type ok
     refresh_user_table
   }
 
