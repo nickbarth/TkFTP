@@ -39,7 +39,7 @@ proc add_user_modal { } {
   vwait _complete
 
   if { $::_complete } {
-    exec adduser --system --ingroup wildtv --home $::_directory$::_username $::_username 2> /dev/null
+    exec adduser --system --ingroup ftpuser --home $::_directory$::_username $::_username 2> /dev/null
     exec echo "$::_username:$::_password" | chpasswd
     tk_messageBox -message "The user `$::_username` was added successfully." -type ok
     refresh_user_table
@@ -128,10 +128,10 @@ proc refresh_user_table { } {
 
   # Grep For Users or None
   #
-  # [bash] awk -F: '{ system("id -gn " $1); print " " $1 " " $6 " " }' /etc/passwd | xargs -n3 | grep wildtv
+  # [bash] awk -F: '{ system("id -gn " $1); print " " $1 " " $6 " " }' /etc/passwd | xargs -n3 | grep ftpuser
   # > root nick /home/nick/
   #
-  if {[catch {exec awk {-F:} {{ system("id -gn " $1); print $1 " " $6 }} /etc/passwd | xargs -n3 | grep wildtv} users]} {
+  if {[catch {exec awk {-F:} {{ system("id -gn " $1); print $1 " " $6 }} /etc/passwd | xargs -n3 | grep ftpuser} users]} {
     set users {}
   }
 
