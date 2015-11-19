@@ -2,87 +2,57 @@
 # \
 exec wish "$0" ${1+"$@"}
 
-package require Expect
-
-# Main Window
-wm title . "Manage FTP"
-wm resizable . 0 0
-wm geometry . +800+500
-. configure -padx 4 -pady 4
-wm attributes . -topmost 0
-
-# Add User Window
-proc AddUserWindow { } {
-  global ftp_env
-
-  destroy .addWin
-  toplevel .addWin -padx 2 -pady 2
-  wm title .addWin "Create User"
-  wm resizable .addWin 0 0
-  regexp {\+([0-9]+)\+([0-9]+)} [winfo geometry .] match x y
-  set x [expr "$x + 100"]
-  set y [expr "$y + 50"]
-  wm geometry .addWin +$x+$y
-  wm attributes .addWin -topmost 1
+proc add_user_modal { } {
+  # Modal Setup
+  set w .add_user_modal
+  toplevel $w
+  tkwait visibility $w
+  grab $w
 
   # UI
-  frame .addWin.frame -padx 2 -pady 2
-  label .addWin.account_label -text "$ftp_env Username:"
-  entry .addWin.account_text -text "" -textvariable account
-  label .addWin.password_label -text "Password:"
-  entry .addWin.password_text -text "" -textvariable password
-  button .addWin.ok -text Create -command {AddWinOk $account $password}
-  button .addWin.cancel -text Cancel -command AddWinCancel
-  focus .addWin.account_text
+  wm title $w "Add User"
+  frame $w.frame -padx 2 -pady 2
+  pack $w.frame -fill x -expand yes
 
-  pack .addWin.frame -fill x -expand yes
-  pack .addWin.account_label -in .addWin.frame -side top -anchor nw
-  pack .addWin.account_text -in .addWin.frame -side top
-  pack .addWin.password_label -in .addWin.frame -side top -anchor nw
-  pack .addWin.password_text -in .addWin.frame -side top
-  pack .addWin.cancel .addWin.ok -side right
-}
+  label $w.account_label -text "Username:"
+  entry $w.account_text -text "" -textvariable _username
+  pack $w.account_label -in $w.frame -side top -anchor nw
+  pack $w.account_text -in $w.frame -side top
+  focus $w.account_text
 
-# Vars
-set ftp_env Production
+  label $w.directory_label -text "Directory:"
+  entry $w.directory_text -text "" -textvariable _directory
+  pack $w.directory_label -in $w.frame -side top -anchor nw
+  pack $w.directory_text -in $w.frame -side top
+  set ::_directory "/home/uploads/"
 
-# Functions
-proc AddWinCancel {} {
-  .addWin.account_text delete 0 end
-  .addWin.password_text delete 0 end
-  destroy .addWin
-}
+  label $w.password_label -text "Password:"
+  entry $w.password_text -text "" -textvariable _password
+  pack $w.password_label -in $w.frame -side top -anchor nw
+  pack $w.password_text -in $w.frame -side top
 
-proc AddWinOk {user password} {
-  global ftp_env
+  button $w.ok -text Create -command {set _complete true}
+  button $w.cancel -text Cancel -command {set _complete false}
+  pack $w.cancel $w.ok -side right
 
-  spawn "/cli/ftp_manager/AddFTPUser$ftp_env.sh"
-  expect {
-    -re "What is the Alpha ID.*" {
-      exp_send "$user\r"
-      exp_continue
-    }
-    password: {
-      exp_send "$password\r"
-      exp_continue
-    }
-    -re "Success:.*" {
-      .addWin.account_text delete 0 end
-      .addWin.password_text delete 0 end
-      destroy .addWin
-      ToggleFTPEnv
-      tk_messageBox -title Error -message [string trim $expect_out(buffer)] -type ok -icon error
-    }
-    -re "Error:.*" {
-      wm attributes .addWin -topmost 0
-      tk_messageBox -title Error -message [string trim $expect_out(buffer)] -type ok -icon error
-      wm attributes .addWin -topmost 1
-    }
+  # Action
+  vwait _complete
+
+  if { $::_complete } {
+    exec adduser --system --ingroup wildtv --home $::_directory $::_username
+    exec echo "$::_username:$::_password" | chpasswd
+    refresh_user_table
   }
+
+  # Cleanup
+  wm withdraw $w
+  destroy $w
+
+  unset ::_complete ::_username ::_directory ::_password
 }
 
-proc RemoveUser { } {
-  global ftp_env
+proc update_user_modal { } {
+  # User Selected Check
   set selection [.user_table selection]
   set selected_user [.user_table item $selection -text]
 
@@ -91,51 +61,110 @@ proc RemoveUser { } {
     return
   }
 
-  set answer [tk_messageBox -message "Delete $ftp_env User `$selected_user`?" -icon question -type yesno]
+  # Modal Setup
+  set w .add_user_modal
+  toplevel $w
+  tkwait visibility $w
+  grab $w
+
+  # UI
+  wm title $w "Update User"
+  frame $w.frame -padx 2 -pady 2
+  pack $w.frame -fill x -expand yes
+
+  label $w.account_label -text "Username:"
+  entry $w.account_text -state disabled -text $selected_user
+  pack $w.account_label -in $w.frame -side top -anchor nw
+  pack $w.account_text -in $w.frame -side top
+  focus $w.account_text
+
+  label $w.password_label -text "Password:"
+  entry $w.password_text -text "" -textvariable _password
+  pack $w.password_label -in $w.frame -side top -anchor nw
+  pack $w.password_text -in $w.frame -side top
+
+  button $w.ok -text Update -command {set _complete true}
+  button $w.cancel -text Cancel -command {set _complete false}
+  pack $w.cancel $w.ok -side right
+
+  # Action
+  vwait _complete
+
+  if { $::_complete } {
+    exec echo "$selected_user:$::_password" | chpasswd
+    tk_messageBox -message "The user `$selected_user` was updated successfully." -type ok
+  }
+
+  # Cleanup
+  wm withdraw $w
+  destroy $w
+
+  unset ::_complete ::_password
+}
+
+proc remove_user_modal { } {
+  # User Selected Check
+  set selection [.user_table selection]
+  set selected_user [.user_table item $selection -text]
+
+  if {$selected_user == ""} {
+    tk_messageBox -message "No user was selected." -type ok -icon error
+    return
+  }
+
+  # Remove user on confirm
+  set answer [tk_messageBox -message "Delete user `$selected_user`?" -icon question -type yesno]
   switch -- $answer {
     yes {
       .user_table delete $selection
-      tk_messageBox -message "$ftp_env User `$selected_user` removed." -type ok
+      tk_messageBox -message "The user `$selected_user` was removed." -type ok
+      exec userdel $selected_user
     }
   }
 }
 
-proc ToggleFTPEnv {} {
-  global ftp_env
-  set ftp_env_lower [string tolower $ftp_env]
-
-  # Clear User Table
+proc refresh_user_table { } {
+   # Clear User Table
   .user_table delete [.user_table children {}]
 
   # Grep For Users or None
-  if {[catch {exec awk {-F:} {{ print $1 " " $6 }} /etc/passwd | grep $ftp_env_lower} users]} {
+  #
+  # [bash] awk -F: '{ system("id -gn " $1); print " " $1 " " $6 " " }' /etc/passwd | xargs -n3 | grep wildtv
+  # > root nick /home/nick/
+  #
+  if {[catch {exec awk {-F:} {{ system("id -gn " $1); print $1 " " $6 }} /etc/passwd | xargs -n3 | grep wildtv} users]} {
     set users {}
   }
 
   # Fill in User Table
   if {[llength $users] != 0} {
-    foreach {user dir} $users {
+    foreach {group user dir} $users {
       .user_table insert {} end -text $user -values [list $dir]
     }
   }
 }
 
+# Main Window
+wm title . "Manage FTP"
+wm resizable . 0 0
+wm geometry . +800+500
+. configure -padx 4 -pady 4
+wm attributes . -topmost 0
+
 # Main Window UI
+# User Table
 ttk::treeview .user_table -selectmode browse -columns "Directory" -displaycolumns "Directory" -yscroll [list .scrollbar set]
 ttk::scrollbar .scrollbar -command [list .user_table yview]
 .user_table heading \#0 -text "User"
 .user_table heading Directory -text "Directory"
-
-frame .actions -padx 2
 pack .user_table .scrollbar -side left -expand yes -fill y
+
+# Populate User Table
+refresh_user_table
+
+# Right Side Actions
+frame .actions -padx 2
 pack .actions -side right -expand yes -fill both
-
-grid [labelframe .select -text Environment] -in .actions -row 0 -column 0 -sticky news
-pack [radiobutton .select.am -text Production -variable ftp_env -value Production -command ToggleFTPEnv] -anchor w
-pack [radiobutton .select.fm -text Uploads -variable ftp_env -value Uploads -command ToggleFTPEnv] -anchor w
-
-grid [button .addbtn -text "Create User" -command AddUserWindow] -in .actions -row 1 -column 0 -sticky news
-# grid [button .rmbtn -text "Remove User" -command RemoveUser] -in .actions -row 2 -column 0 -sticky news
-
-# Init
-ToggleFTPEnv
+grid [button .add_button -text "Add User" -command add_user_modal] -in .actions -row 0 -column 0 -sticky news
+grid [button .update_button -text "Update User" -command update_user_modal] -in .actions -row 1 -column 0 -sticky news
+grid [button .remove_button -text "Remove User" -command remove_user_modal] -in .actions -row 2 -column 0 -sticky news
