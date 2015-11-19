@@ -1,11 +1,9 @@
 # TkFTP
 
-### Setup
-
-#### Server
+#### Server Setup
 sudo apt-get install -y xorg
 
-#### Client
+#### Client Setup
 Install x or X11 - XQuarts.
 
 ### License
