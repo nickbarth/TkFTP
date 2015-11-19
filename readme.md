@@ -4,7 +4,7 @@
 sudo apt-get install -y xorg
 
 #### Client Setup
-Install x or X11 - XQuarts.
+Install X or X11 - XQuarts.
 
 ### License
 
