@@ -72,16 +72,14 @@ proc update_user_modal { } {
   frame $w.frame -padx 2 -pady 2
   pack $w.frame -fill x -expand yes
 
-  label $w.account_label -text "Username:"
-  entry $w.account_text -state disabled -text $selected_user
+  label $w.account_label -justify left -text "Username:\n$selected_user"
   pack $w.account_label -in $w.frame -side top -anchor nw
-  pack $w.account_text -in $w.frame -side top
-  focus $w.account_text
-
+  
   label $w.password_label -text "Password:"
   entry $w.password_text -text "" -textvariable _password
   pack $w.password_label -in $w.frame -side top -anchor nw
   pack $w.password_text -in $w.frame -side top
+  focus $w.password_text
 
   button $w.ok -text Update -command {set _complete true}
   button $w.cancel -text Cancel -command {set _complete false}
