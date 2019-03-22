@@ -8,4 +8,4 @@ Install X or X11 - XQuarts for OSX.
 
 ### License
 
-GNU GPL &copy; 2015 Nick Barth
+WTFPL &copy; 2015 Nick Barth
